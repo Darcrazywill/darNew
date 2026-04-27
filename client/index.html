@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+ <meta charset="UTF-8">
+ <title>API Client kokoreva</title>
+ <style>
+   body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; background: #f8f9fa; }
+   .btn { margin: 0.3rem; padding: 0.6rem 1rem; border: none; background: #0d6efd; color: #fff; border-radius: 6px; cursor: pointer; }
+   .btn:hover { background: #0b5ed7; }
+   pre { background: #212529; color: #00ff00; padding: 1rem; border-radius: 8px; min-height: 120px; white-space: pre-wrap; }
+   .status { font-weight: bold; margin-bottom: 0.5rem; }
+ </style>
+</head>
+<body>
+ <h1>🌐 Тест API из браузера</h1>
+ <button class="btn" onclick="call('/hello')">GET /hello</button>
+ <button class="btn" onclick="call('/date')">GET /date</button>
+ <button class="btn" onclick="call('/echo', 'POST', {user:'kokoreva', action:'test'})">POST /echo</button>
+ <div class="status" id="status">Ожидание запроса...</div>
+ <pre id="output">Нажмите кнопку...</pre>
+
+
+ <script>
+   const API = 'http://api.kokoreva.ru:8084';
+   const out = document.getElementById('output');
+   const status = document.getElementById('status');
+
+
+   async function call(endpoint, method = 'GET', body = null) {
+     status.textContent = `⏳ Выполняется ${method} ${endpoint}...`;
+     out.textContent = 'Загрузка...';
+     try {
+       const opts = { method, headers: { 'Content-Type': 'application/json' } };
+       if (body) opts.body = JSON.stringify(body);
+       const res = await fetch(`${API}${endpoint}`, opts);
+       const data = await res.json();
+       status.textContent = `✅ ${res.status} ${res.statusText} | ${res.headers.get('content-type')}`;
+       out.textContent = JSON.stringify(data, null, 2);
+     } catch (e) {
+       status.textContent = `❌ Сетевая ошибка`;
+       out.textContent = `Ошибка: ${e.message}\n\n1. Запущен ли Nginx? (sudo systemctl status nginx)\n2. Доступен ли http://api.kokoreva.ru?\n3. Нет ли блокировки CORS/AdBlock?`;
+     }
+   }
+ </script>
+</body>
+</html>
+
