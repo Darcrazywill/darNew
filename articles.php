@@ -27,7 +27,7 @@ $totalPages = ceil($total / $limit);
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
-    <?php include 'includes/header.php'; ?>
+    <?php //include 'includes/header.php'; ?>
     <main class="container">
         <div class="page-header">
             <h1>📚 Статьи</h1>
@@ -59,7 +59,7 @@ $totalPages = ceil($total / $limit);
             <?php endif; ?>
         <?php endif; ?>
     </main>
-    <?php include 'includes/footer.php'; ?>
+    <?php //include 'includes/footer.php'; ?>
 </body>
 </html>
 
