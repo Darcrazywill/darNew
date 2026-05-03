@@ -142,6 +142,83 @@ case 'del':
         ], JSON_UNESCAPED_UNICODE);
     }
     break;
+case 'edit':
+    if ($method !== 'POST') {
+        http_response_code(405);
+        echo json_encode([
+            'error' => 'Для action=edit используйте метод POST'
+        ], JSON_UNESCAPED_UNICODE);
+        break;
+    }
+
+    $id = $_GET['id'] ?? null;
+
+    if (!$id || !ctype_digit($id)) {
+        http_response_code(400);
+        echo json_encode([
+            'error' => 'Нужно передать корректный параметр id'
+        ], JSON_UNESCAPED_UNICODE);
+        break;
+    }
+
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    if (!$input) {
+        $input = $_POST;
+    }
+
+    $title       = $input['title'] ?? null;
+    $content     = $input['content'] ?? null;
+    $author_name = $input['author_name'] ?? null;
+    $rating      = $input['rating'] ?? null;
+
+    if (!$title || !$content) {
+        http_response_code(400);
+        echo json_encode([
+            'error' => 'Поля title и content обязательны'
+        ], JSON_UNESCAPED_UNICODE);
+        break;
+    }
+
+    try {
+        $stmt = $pdo->prepare('
+            UPDATE articles
+            SET title = :title,
+                content = :content,
+                author_name = :author_name,
+                rating = :rating,
+                updated_at = NOW()
+            WHERE id = :id
+        ');
+
+        $stmt->execute([
+            'title'       => $title,
+            'content'     => $content,
+            'author_name' => $author_name,
+            'rating'      => $rating,
+            'id'          => $id
+        ]);
+
+        if ($stmt->rowCount() === 0) {
+            http_response_code(404);
+            echo json_encode([
+                'error' => 'Запись не найдена или данные не изменились'
+            ], JSON_UNESCAPED_UNICODE);
+        } else {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Запись обновлена',
+                'id'      => (int)$id
+            ], JSON_UNESCAPED_UNICODE);
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Ошибка обновления записи',
+            'details' => $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
+    }
+    break;
     default:
         http_response_code(404);
         echo json_encode([
