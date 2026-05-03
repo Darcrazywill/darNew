@@ -75,6 +75,39 @@ switch ($action) {
         }
         break;
 
+    case 'get':
+        $id = $_GET['id'] ?? null;
+
+        if (!$id || !ctype_digit($id)) {
+            http_response_code(400);
+            echo json_encode([
+                'error' => 'Нужно передать корректный параметр id'
+            ], JSON_UNESCAPED_UNICODE);
+            break;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT * FROM articles WHERE id = :id LIMIT 1');
+            $stmt->execute(['id' => $id]);
+            $row = $stmt->fetch();
+
+            if (!$row) {
+                http_response_code(404);
+                echo json_encode([
+                    'error' => 'Запись не найдена'
+                ], JSON_UNESCAPED_UNICODE);
+            } else {
+                echo json_encode($row, JSON_UNESCAPED_UNICODE);
+            }
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'error' => 'Ошибка выборки из БД',
+                'details' => $e->getMessage()
+            ], JSON_UNESCAPED_UNICODE);
+        }
+        break;
+
     default:
         http_response_code(404);
         echo json_encode([
