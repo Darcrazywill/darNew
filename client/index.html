@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Генератор советов</title>
+    <title>Получить совет</title>
     <style>
         * {
             box-sizing: border-box;
@@ -12,77 +12,53 @@
         body {
             margin: 0;
             min-height: 100vh;
-            font-family: "Segoe UI", Arial, sans-serif;
-            background:
-                radial-gradient(circle at top left, rgba(88, 145, 255, 0.25), transparent 28%),
-                radial-gradient(circle at bottom right, rgba(0, 195, 255, 0.20), transparent 30%),
-                linear-gradient(135deg, #081120 0%, #102347 45%, #173b74 100%);
-            color: #eef4ff;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #0b1d3a, #123c73, #1d5fa8);
+            color: white;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 24px;
+            padding: 20px;
         }
 
-        .app {
+        .container {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1000px;
             display: grid;
-            grid-template-columns: 1.1fr 0.9fr;
-            gap: 24px;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
         }
 
-        .panel {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.14);
-            border-radius: 28px;
-            backdrop-filter: blur(16px);
-            box-shadow: 0 18px 50px rgba(0,0,0,0.30);
-            padding: 28px;
+        .card {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 20px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
         }
 
         h1, h2 {
             margin-top: 0;
         }
 
-        h1 {
-            font-size: 38px;
-            margin-bottom: 10px;
-        }
-
-        h2 {
-            font-size: 24px;
-            margin-bottom: 18px;
-        }
-
-        .subtitle {
-            color: rgba(235, 242, 255, 0.74);
-            margin-bottom: 24px;
-            line-height: 1.6;
-        }
-
         .advice-box {
             min-height: 180px;
             background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.10);
-            border-radius: 22px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            margin-bottom: 20px;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
         }
 
         .advice-id {
-            font-size: 13px;
-            color: rgba(232,241,255,0.6);
+            font-size: 14px;
+            opacity: 0.7;
             margin-bottom: 10px;
         }
 
         .advice-text {
-            font-size: 26px;
-            line-height: 1.45;
-            font-weight: 600;
+            font-size: 24px;
+            line-height: 1.5;
+            font-weight: bold;
         }
 
         .buttons {
@@ -93,139 +69,113 @@
 
         button {
             border: none;
-            border-radius: 16px;
-            padding: 14px 18px;
+            border-radius: 12px;
+            padding: 12px 18px;
             font-size: 15px;
-            font-weight: 600;
+            font-weight: bold;
             cursor: pointer;
-            transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
         }
 
-        button:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #59a6ff, #2a6fff);
+        .btn-main {
+            background: #4da3ff;
             color: white;
-            box-shadow: 0 10px 25px rgba(42, 111, 255, 0.35);
         }
 
-        .btn-secondary {
-            background: rgba(255,255,255,0.10);
-            color: #eef4ff;
-            border: 1px solid rgba(255,255,255,0.14);
+        .btn-save {
+            background: #7ed6ff;
+            color: #07203f;
+        }
+
+        .btn-delete {
+            background: #ff6b81;
+            color: white;
+            padding: 8px 12px;
+            font-size: 13px;
         }
 
         .status {
-            margin-top: 14px;
-            min-height: 24px;
-            color: rgba(235, 242, 255, 0.78);
-        }
-
-        .favorites-list {
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            max-height: 540px;
-            overflow-y: auto;
-            padding-right: 4px;
+            margin-top: 15px;
+            min-height: 20px;
+            opacity: 0.85;
         }
 
         .favorite-item {
             background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.10);
-            border-radius: 18px;
-            padding: 16px;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
         }
 
         .favorite-id {
             font-size: 12px;
-            color: rgba(235, 242, 255, 0.60);
+            opacity: 0.7;
             margin-bottom: 8px;
         }
 
         .favorite-text {
-            line-height: 1.5;
+            line-height: 1.45;
             margin-bottom: 12px;
         }
 
-        .favorite-actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .btn-remove {
-            background: rgba(255, 92, 118, 0.18);
-            color: #ffd9e0;
-            border: 1px solid rgba(255, 133, 153, 0.22);
-            padding: 10px 14px;
-            border-radius: 12px;
-        }
-
         .empty {
-            color: rgba(235, 242, 255, 0.65);
-            background: rgba(255,255,255,0.05);
-            border-radius: 18px;
-            padding: 18px;
+            opacity: 0.7;
+            padding: 16px 0;
         }
 
-        @media (max-width: 900px) {
-            .app {
+        @media (max-width: 800px) {
+            .container {
                 grid-template-columns: 1fr;
             }
 
             .advice-text {
-                font-size: 22px;
+                font-size: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app">
-        <section class="panel">
+    <div class="container">
+        <div class="card">
             <h1>Генератор советов</h1>
-            <div class="subtitle">
-                Нажми на кнопку, чтобы получить случайный совет с Advice Slip API.
-            </div>
+            <p>Нажмите кнопку, чтобы получить случайный совет.</p>
 
             <div class="advice-box">
-                <div class="advice-id" id="adviceId">Совет ещё не загружен</div>
-                <div class="advice-text" id="adviceText">Нажми «Получить совет»</div>
+                <div class="advice-id" id="adviceId">Совет ещё не получен</div>
+                <div class="advice-text" id="adviceText">Нажмите «Получить совет»</div>
             </div>
 
             <div class="buttons">
-                <button class="btn-primary" id="loadAdviceBtn">Получить совет</button>
-                <button class="btn-secondary" id="saveAdviceBtn">Сохранить в избранное</button>
+                <button class="btn-main" id="getAdviceBtn">Получить совет</button>
+                <button class="btn-save" id="saveAdviceBtn">Сохранить совет</button>
             </div>
 
             <div class="status" id="status"></div>
-        </section>
+        </div>
 
-        <aside class="panel">
-            <h2>Избранные советы</h2>
-            <div class="favorites-list" id="favoritesList"></div>
-        </aside>
+        <div class="card">
+            <h2>Сохранённые советы</h2>
+            <div id="favorites"></div>
+        </div>
     </div>
 
     <script>
-        const adviceText = document.getElementById('adviceText');
-        const adviceId = document.getElementById('adviceId');
+        const adviceIdEl = document.getElementById('adviceId');
+        const adviceTextEl = document.getElementById('adviceText');
         const statusEl = document.getElementById('status');
-        const favoritesList = document.getElementById('favoritesList');
-        const loadAdviceBtn = document.getElementById('loadAdviceBtn');
+        const favoritesEl = document.getElementById('favorites');
+        const getAdviceBtn = document.getElementById('getAdviceBtn');
         const saveAdviceBtn = document.getElementById('saveAdviceBtn');
 
+        const STORAGE_KEY = 'saved_advices';
         let currentAdvice = null;
-        const STORAGE_KEY = 'favorite_advices';
 
-        function getFavorites() {
-            const raw = localStorage.getItem(STORAGE_KEY);
-            return raw ? JSON.parse(raw) : [];
+        function loadFavorites() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
         }
 
-        function saveFavorites(items) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        function saveFavorites(favorites) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(favorites));
         }
 
         function escapeHtml(text) {
@@ -238,33 +188,31 @@
         }
 
         function renderFavorites() {
-            const favorites = getFavorites();
+            const favorites = loadFavorites();
 
             if (favorites.length === 0) {
-                favoritesList.innerHTML = '<div class="empty">Пока нет сохранённых советов.</div>';
+                favoritesEl.innerHTML = '<div class="empty">Нет сохранённых советов.</div>';
                 return;
             }
 
-            favoritesList.innerHTML = favorites.map(item => `
+            favoritesEl.innerHTML = favorites.map(item => `
                 <div class="favorite-item">
                     <div class="favorite-id">Совет #${item.id}</div>
                     <div class="favorite-text">${escapeHtml(item.advice)}</div>
-                    <div class="favorite-actions">
-                        <button class="btn-remove" onclick="removeFavorite(${item.id})">Удалить</button>
-                    </div>
+                    <button class="btn-delete" onclick="deleteFavorite(${item.id})">Удалить</button>
                 </div>
             `).join('');
         }
 
-        function removeFavorite(id) {
-            const favorites = getFavorites().filter(item => item.id !== id);
+        function deleteFavorite(id) {
+            const favorites = loadFavorites().filter(item => item.id !== id);
             saveFavorites(favorites);
             renderFavorites();
-            statusEl.textContent = 'Совет удалён из избранного.';
+            statusEl.textContent = 'Совет удалён.';
         }
 
-        async function loadAdvice() {
-            statusEl.textContent = 'Загрузка...';
+        async function getAdvice() {
+            statusEl.textContent = 'Загрузка совета...';
 
             try {
                 const response = await fetch(`https://api.adviceslip.com/advice?ts=${Date.now()}`, {
@@ -278,24 +226,24 @@
                 const data = await response.json();
                 currentAdvice = data.slip;
 
-                adviceId.textContent = 'Совет #' + currentAdvice.id;
-                adviceText.textContent = currentAdvice.advice;
-                statusEl.textContent = 'Новый совет получен.';
+                adviceIdEl.textContent = `Совет #${currentAdvice.id}`;
+                adviceTextEl.textContent = currentAdvice.advice;
+                statusEl.textContent = 'Совет получен.';
             } catch (error) {
-                statusEl.textContent = 'Не удалось получить совет.';
-                adviceId.textContent = 'Ошибка загрузки';
-                adviceText.textContent = 'Попробуй ещё раз позже.';
+                adviceIdEl.textContent = 'Ошибка';
+                adviceTextEl.textContent = 'Не удалось получить совет.';
+                statusEl.textContent = 'Ошибка загрузки.';
                 console.error(error);
             }
         }
 
         function saveCurrentAdvice() {
             if (!currentAdvice) {
-                statusEl.textContent = 'Сначала получи совет.';
+                statusEl.textContent = 'Сначала получите совет.';
                 return;
             }
 
-            const favorites = getFavorites();
+            const favorites = loadFavorites();
             const exists = favorites.some(item => item.id === currentAdvice.id);
 
             if (exists) {
@@ -306,10 +254,10 @@
             favorites.unshift(currentAdvice);
             saveFavorites(favorites);
             renderFavorites();
-            statusEl.textContent = 'Совет сохранён в избранное.';
+            statusEl.textContent = 'Совет сохранён.';
         }
 
-        loadAdviceBtn.addEventListener('click', loadAdvice);
+        getAdviceBtn.addEventListener('click', getAdvice);
         saveAdviceBtn.addEventListener('click', saveCurrentAdvice);
 
         renderFavorites();
