@@ -1,47 +1,214 @@
+<?php
+// ============================================
+// Лабораторная работа: Погодный информер
+// API: Open-Meteo (бесплатный, без ключа)
+// ============================================
+
+// ---------- НАСТРОЙКИ ----------
+$lat = 59.9386;      // Широта (Санкт-Петербург)
+$lon = 30.2141;      // Долгота (Санкт-Петербург)
+$cityName = 'Санкт-Петербург';
+
+// ---------- ФУНКЦИЯ ЗАПРОСА К API ----------
+function getWeather($lat, $lon) {
+    $url = "https://api.open-meteo.com/v1/forecast?" 
+         . "latitude={$lat}&longitude={$lon}"
+         . "&current_weather=true"
+         . "&hourly=temperature_2m,relative_humidity_2m,precipitation"
+         . "&daily=temperature_2m_max,temperature_2m_min,weathercode,windspeed_10m_max"
+         . "&timezone=auto";
+    
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    curl_close($ch);
+    
+    if ($httpCode === 200 && $response) {
+        return json_decode($response, true);
+    } else {
+        return ['error' => "HTTP $httpCode: $error"];
+    }
+}
+
+// ---------- ФУНКЦИЯ РАСШИФРОВКИ КОДА ПОГОДЫ ----------
+function getWeatherDescription($weatherCode) {
+    // ИСПРАВЛЕНО: обработка случая, когда приходит массив или null
+    if (is_array($weatherCode)) {
+        $weatherCode = $weatherCode[0] ?? 0;
+    }
+    $weatherCode = (int)$weatherCode;
+    
+    $codes = [
+        0 => '☀️ Ясно',
+        1 => '🌤️ Малооблачно',
+        2 => '⛅ Переменная облачность',
+        3 => '☁️ Пасмурно',
+        45 => '🌫️ Туман',
+        48 => '❄️🌫️ Туман с изморозью',
+        51 => '🌧️ Легкая морось',
+        53 => '🌧️ Морось',
+        55 => '🌧️ Сильная морось',
+        56 => '❄️🌧️ Ледяная морось',
+        57 => '❄️🌧️ Плотная ледяная морось',
+        61 => '🌧️ Небольшой дождь',
+        63 => '🌧️ Дождь',
+        65 => '🌧️ Сильный дождь',
+        66 => '❄️🌧️ Ледяной дождь',
+        67 => '❄️🌧️ Сильный ледяной дождь',
+        71 => '❄️ Небольшой снег',
+        73 => '❄️ Снег',
+        75 => '❄️ Сильный снег',
+        77 => '❄️ Снежная крупа',
+        80 => '🌦️ Небольшой ливень',
+        81 => '🌦️ Умеренный ливень',
+        82 => '🌧️💨 Сильный ливень',
+        85 => '❄️🌨️ Небольшой снегопад',
+        86 => '❄️🌨️ Сильный снегопад',
+        95 => '⛈️ Гроза',
+        96 => '⛈️ Гроза с градом',
+        99 => '⛈️💨 Сильная гроза с градом'
+    ];
+    
+    return $codes[$weatherCode] ?? "❓ Код: {$weatherCode}";
+}
+
+// ---------- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ТОЛЬКО ИКОНКИ (БЕЗ ТЕКСТА) ----------
+// ИСПРАВЛЕНО: правильная работа с многобайтовыми символами (эмодзи)
+function getWeatherIcon($weatherCode) {
+    $description = getWeatherDescription($weatherCode);
+    // Извлекаем первый символ (эмодзи) с учётом UTF-8
+    return mb_substr($description, 0, 1);
+}
+
+// ---------- ПОЛУЧАЕМ ДАННЫЕ ----------
+$weatherData = getWeather($lat, $lon);
+?>
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
- <meta charset="UTF-8">
- <title>API Client kokoreva</title>
- <style>
-   body { font-family: system-ui, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; background: #f8f9fa; }
-   .btn { margin: 0.3rem; padding: 0.6rem 1rem; border: none; background: #0d6efd; color: #fff; border-radius: 6px; cursor: pointer; }
-   .btn:hover { background: #0b5ed7; }
-   pre { background: #212529; color: #00ff00; padding: 1rem; border-radius: 8px; min-height: 120px; white-space: pre-wrap; }
-   .status { font-weight: bold; margin-bottom: 0.5rem; }
- </style>
+    <meta charset="UTF-8">
+    <title>Погодный информер</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .weather-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        .temperature {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .details {
+            margin: 15px 0;
+        }
+        .forecast {
+            margin-top: 20px;
+        }
+        .forecast-grid {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .forecast-day {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 70px;
+        }
+        .error {
+            background: #c62828;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .condition {
+            font-size: 1.2rem;
+        }
+    </style>
 </head>
 <body>
- <h1>🌐 Тест API из браузера</h1>
- <button class="btn" onclick="call('/hello')">GET /hello</button>
- <button class="btn" onclick="call('/date')">GET /date</button>
- <button class="btn" onclick="call('/echo', 'POST', {user:'kokoreva', action:'test'})">POST /echo</button>
- <div class="status" id="status">Ожидание запроса...</div>
- <pre id="output">Нажмите кнопку...</pre>
-
-
- <script>
-   const API = 'http://api.kokoreva.ru:8084';
-   const out = document.getElementById('output');
-   const status = document.getElementById('status');
-
-
-   async function call(endpoint, method = 'GET', body = null) {
-     status.textContent = `⏳ Выполняется ${method} ${endpoint}...`;
-     out.textContent = 'Загрузка...';
-     try {
-       const opts = { method, headers: { 'Content-Type': 'application/json' } };
-       if (body) opts.body = JSON.stringify(body);
-       const res = await fetch(`${API}${endpoint}`, opts);
-       const data = await res.json();
-       status.textContent = `✅ ${res.status} ${res.statusText} | ${res.headers.get('content-type')}`;
-       out.textContent = JSON.stringify(data, null, 2);
-     } catch (e) {
-       status.textContent = `❌ Сетевая ошибка`;
-       out.textContent = `Ошибка: ${e.message}\n\n1. Запущен ли Nginx? (sudo systemctl status nginx)\n2. Доступен ли http://api.kokoreva.ru?\n3. Нет ли блокировки CORS/AdBlock?`;
-     }
-   }
- </script>
+    <div class="weather-card">
+        <h1>🌤️ Погодный информер</h1>
+        
+        <?php if (isset($weatherData['error'])): ?>
+            <div class="error">
+                <strong>Ошибка:</strong> <?= htmlspecialchars($weatherData['error']) ?>
+            </div>
+        <?php elseif (!isset($weatherData['current_weather'])): ?>
+            <div class="error">
+                <strong>Ошибка:</strong> Не удалось получить данные
+            </div>
+        <?php else: 
+            $current = $weatherData['current_weather'];
+            $daily = $weatherData['daily'] ?? null;
+        ?>
+            <div class="city-name">
+                <h2><?= htmlspecialchars($cityName) ?></h2>
+                <div><?= $lat ?>°, <?= $lon ?>°</div>
+            </div>
+            
+            <div class="temperature">
+                <?= round($current['temperature']) ?>°C
+            </div>
+            
+            <div class="condition">
+                <?= getWeatherDescription($current['weathercode'] ?? 0) ?>
+            </div>
+            
+            <div class="details">
+                <div>💨 Ветер: <?= round($current['windspeed'] ?? 0) ?> км/ч</div>
+                <div>🕐 <?= date('d.m.Y H:i', strtotime($current['time'] ?? 'now')) ?></div>
+            </div>
+            
+            <?php if ($daily && isset($daily['time'])): ?>
+            <div class="forecast">
+                <h3>Прогноз на 7 дней</h3>
+                <div class="forecast-grid">
+                    <?php 
+                    $weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+                    for ($i = 0; $i < min(7, count($daily['time'])); $i++): 
+                        $date = new DateTime($daily['time'][$i]);
+                        $dayName = $weekDays[$date->format('N') - 1];
+                        // ИСПРАВЛЕНО: получаем код погоды для дня
+                        $weatherCode = $daily['weathercode'][$i] ?? 0;
+                    ?>
+                    <div class="forecast-day">
+                        <div><strong><?= $dayName ?></strong></div>
+                        <div><?= $date->format('d.m') ?></div>
+                        <div><?= round($daily['temperature_2m_max'][$i] ?? 0) ?>°</div>
+                        <div style="font-size: 12px;"><?= round($daily['temperature_2m_min'][$i] ?? 0) ?>°</div>
+                                                <div style="font-size: 1.5rem;"><?= getWeatherIcon($weatherCode) ?></div>
+                    </div>
+                    <?php endfor; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </body>
 </html>
+
 
