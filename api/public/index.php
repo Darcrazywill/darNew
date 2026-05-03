@@ -107,7 +107,41 @@ switch ($action) {
             ], JSON_UNESCAPED_UNICODE);
         }
         break;
+case 'del':
+    $id = $_GET['id'] ?? null;
 
+    if (!$id || !ctype_digit($id)) {
+        http_response_code(400);
+        echo json_encode([
+            'error' => 'Нужно передать корректный параметр id'
+        ], JSON_UNESCAPED_UNICODE);
+        break;
+    }
+
+    try {
+        $stmt = $pdo->prepare('DELETE FROM articles WHERE id = :id');
+        $stmt->execute(['id' => $id]);
+
+        if ($stmt->rowCount() === 0) {
+            http_response_code(404);
+            echo json_encode([
+                'error' => 'Запись не найдена'
+            ], JSON_UNESCAPED_UNICODE);
+        } else {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Запись удалена',
+                'id'      => (int)$id
+            ], JSON_UNESCAPED_UNICODE);
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode([
+            'error' => 'Ошибка удаления из БД',
+            'details' => $e->getMessage()
+        ], JSON_UNESCAPED_UNICODE);
+    }
+    break;
     default:
         http_response_code(404);
         echo json_encode([
